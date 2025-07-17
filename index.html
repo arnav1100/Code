@@ -1,65 +1,142 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ARNAV X: CODE MODE</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Courier New', monospace;
-      background-color: #0a0a0a;
-      color: #00ffcc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.2em;
+      background-color: #0f0f0f;
       color: #00ff99;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 1rem;
+      background: #000;
+      color: #00ff99;
+      border: 1px solid #00ff99;
+    }
+    .prediction {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-top: 20px;
     }
     .quote {
-      font-size: 1.2rem;
+      margin-top: 30px;
+      font-size: 1rem;
       font-style: italic;
-      color: #888;
-      margin-bottom: 1em;
-      text-align: center;
+      color: #ccc;
     }
-    .quote span {
-      color: #00ffcc;
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9rem;
     }
-    .links {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .links a {
-      color: #00ffff;
+    .footer a {
+      color: #00ff99;
       text-decoration: none;
-      font-weight: bold;
-      border: 1px solid #00ffff;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      transition: 0.3s;
-    }
-    .links a:hover {
-      background-color: #00ffff;
-      color: #000;
     }
   </style>
 </head>
 <body>
-  <h1>ARNAV X: CODE MODE</h1>
+  <h1>⚔️ ARNAV X: CODE MODE ⚔️</h1>
+  <p>Enter last 10 results (comma separated):</p>
+  <input type="text" id="resultsInput" placeholder="e.g. 5,7,3,4,2,0,9,1,6,8" size="40"/>
+  <br/>
+  <button onclick="analyze()">Predict</button>
+  <div class="prediction" id="predictionResult"></div>
+
   <div class="quote">
     "While they guess the next move…<br>
-    <span>I’m writing the algorithm.</span>"<br>
-    — Arnav
+    I'm writing the algorithm."<br>— Arnav
   </div>
-  <div class="links">
-    <a href="https://t.me/+fKHabYVx_shkMDk1" target="_blank">Telegram Channel</a>
-    <a href="https://t.me/ARNAV_1100" target="_blank">@ARNAV_1100</a>
+
+  <div class="footer">
+    🔗 <a href="https://t.me/ARNAV_1100" target="_blank">My Telegram</a> |
+    📢 <a href="https://t.me/+fKHabYVx_shkMDk1" target="_blank">My Channel</a>
   </div>
+
+  <script>
+    let history = [];
+    let skipsUsed = 0;
+    let losses = 0;
+
+    function analyze() {
+      const input = document.getElementById("resultsInput").value;
+      let data = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+      if (data.length !== 10) {
+        document.getElementById("predictionResult").innerText = "❌ Enter exactly 10 valid numbers!";
+        return;
+      }
+
+      // Store updated history (latest 10)
+      history = data.slice();
+
+      const last = data[data.length - 1];
+      const evenOddCount = data.reduce((acc, val) => {
+        if (val % 2 === 0) acc.even++;
+        else acc.odd++;
+        return acc;
+      }, { even: 0, odd: 0 });
+
+      let prediction = "";
+      let confidence = 50;
+
+      // Last digit rule
+      if ([0, 1, 5, 8, 9].includes(last)) {
+        prediction = "BIG";
+        confidence += 10;
+      } else {
+        prediction = "SMALL";
+        confidence += 10;
+      }
+
+      // Streak breaker logic
+      let streak = 1;
+      for (let i = data.length - 2; i >= 0; i--) {
+        if ((data[i] > 4) === (data[i + 1] > 4)) streak++;
+        else break;
+      }
+      if (streak >= 3) {
+        prediction = prediction === "BIG" ? "SMALL" : "BIG";
+        confidence -= 5;
+      }
+
+      // Odd/even cycle adjust
+      if (evenOddCount.odd > evenOddCount.even + 2) {
+        prediction = "BIG";
+      } else if (evenOddCount.even > evenOddCount.odd + 2) {
+        prediction = "SMALL";
+      }
+
+      // Layer switch on 3 losses
+      if (losses >= 3) {
+        prediction = prediction === "BIG" ? "SMALL" : "BIG";
+        confidence += 5;
+        losses = 0;
+      }
+
+      // Skip logic if confidence too low
+      if (confidence < 55 && skipsUsed < 2) {
+        skipsUsed++;
+        document.getElementById("predictionResult").innerText = "⚠️ SKIP THIS ROUND (Low confidence)";
+        return;
+      }
+
+      document.getElementById("predictionResult").innerHTML =
+        `🧠 PREDICT: <span style="color: yellow">${prediction}</span><br>🔐 Confidence: ${confidence}%`;
+
+      // Simulate result (you can change this part)
+      const actual = data[data.length - 1] > 4 ? "BIG" : "SMALL";
+      if (prediction !== actual) {
+        losses++;
+      } else {
+        losses = 0;
+      }
+    }
+  </script>
 </body>
 </html>
